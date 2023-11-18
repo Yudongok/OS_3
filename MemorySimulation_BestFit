@@ -1,1 +1,193 @@
+package programing_3_;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Random;
+
+class Process {
+	int size;
+	int startAddress;
+	int endAddress;
+
+	public Process() {
+		Random random = new Random();
+		// 프로세스 사이즈는 3~10
+		size = random.nextInt(8) + 3;
+	}
+
+	public int getStartAddress() {
+		return startAddress;
+	}
+
+	public void setStartAddress(int startAddress) {
+		this.startAddress = startAddress;
+	}
+
+	public int getEndAddress() {
+		return endAddress;
+	}
+
+	public void setEndAddress(int endAddress) {
+		this.endAddress = endAddress;
+	}
+}
+
+class Hole {
+	int startAddress;
+	int endAddress;
+	int size;
+
+	// Hole만들때는 startAddress, endAddress인자로 줘야함.
+	public Hole(int startAddress, int endAddress) {
+		this.startAddress = startAddress;
+		this.endAddress = endAddress;
+		this.size = endAddress - startAddress;
+	}
+
+	public int getStartAddress() {
+		return startAddress;
+	}
+
+	public void setStartAddress(int startAddress) {
+		this.startAddress = startAddress;
+	}
+
+	public int getEndAddress() {
+		return endAddress;
+	}
+
+	public void setEndAddress(int endAddress) {
+		this.endAddress = endAddress;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int endAddress, int startAddress) {
+		this.size = endAddress - startAddress;
+	}
+
+}
+
+public class MemorySimulation_BestFit {
+	public static void main(String[] args) {
+		Queue<Process> processQueue = new LinkedList<Process>();
+		ArrayList<Hole> hole = new ArrayList<Hole>();
+		ArrayList<Process> process = new ArrayList<Process>();
+		Hole firstHole = new Hole(0, 100);
+		hole.add(firstHole);
+		int num = 0;
+		boolean externalFragmentation = false;
+		int[] diffrence = null;
+		int min;
+		int min_index;
+		while (!externalFragmentation) {
+			// 프로세스 4개 생성
+			for (int i = 0; i < 4; i++) {
+				Process newProcess = new Process();
+				processQueue.add(newProcess);
+			}
+			// 프로세스 큐에서 하나씩 꺼내면서 비교
+			while (!processQueue.isEmpty()) {
+				// 프로세스큐에서 하나씩 꺼냄
+				Process removedProcess = processQueue.poll();
+				diffrence = new int[hole.size()];
+				for (int j = 0; j < hole.size(); j++) {
+					// 꺼낸 프로세스 사이즈와 홀의 사이즈 비교
+					diffrence[j] = hole.get(j).getSize() - removedProcess.size;
+				}
+				min = diffrence[0];
+				min_index = 0;
+				for (int k = 1; k < diffrence.length; k++) {
+					if (diffrence[k] < min) {
+						if (diffrence[k] < 0)
+							continue;
+						else
+							min = diffrence[k];
+						// 프로세스를 넣게 될 hole의 인덱스
+						min_index = k;
+					} else
+						continue;
+				}
+				if (min > 0) {
+					removedProcess.setStartAddress(hole.get(min_index).getStartAddress());
+					removedProcess.setEndAddress(hole.get(min_index).getStartAddress() + removedProcess.size);
+					hole.get(min_index).setStartAddress(removedProcess.getEndAddress());
+					hole.get(min_index).setSize(hole.get(min_index).getEndAddress(),
+							hole.get(min_index).getStartAddress());
+					process.add(removedProcess);
+				} else if (min == 0) {
+					removedProcess.setStartAddress(hole.get(min_index).getStartAddress());
+					removedProcess.setEndAddress(hole.get(min_index).getStartAddress() + removedProcess.size);
+					hole.remove(min_index);
+					process.add(removedProcess);
+				} else {
+					for (int k = 0; k < process.size(); k++) {
+						System.out.printf("[%d]번째 프로세스 주소(%d, %d)\n", k, process.get(k).getStartAddress(),
+								process.get(k).getEndAddress());
+					}
+					System.out.println("외부단편화 발생");
+					externalFragmentation = true;
+					break;
+				}
+				// 꺼낸 프로세스 사이즈가 홀의 사이즈보다 작다면
+				/*
+				 * if (removedProcess.size < hole.get(j).getSize()) {
+				 * removedProcess.setStartAddress(hole.get(j).getStartAddress());
+				 * removedProcess.setEndAddress(hole.get(j).getStartAddress() +
+				 * removedProcess.size);
+				 * hole.get(j).setStartAddress(removedProcess.getEndAddress());
+				 * hole.get(j).setSize(hole.get(j).getEndAddress(),
+				 * hole.get(j).getStartAddress()); process.add(removedProcess); break; } else if
+				 * (removedProcess.size == hole.get(j).getSize()) {
+				 * removedProcess.setStartAddress(hole.get(j).getStartAddress());
+				 * removedProcess.setEndAddress(hole.get(j).getStartAddress() +
+				 * removedProcess.size); hole.remove(j); process.add(removedProcess); break; }
+				 * else { // hole의 리스트를 다 순회했다면 if (j == hole.size() - 1) { for (int k = 0; k <
+				 * process.size(); k++) { System.out.printf("[%d]번째 프로세스 주소(%d, %d)\n", k,
+				 * process.get(k).getStartAddress(), process.get(k).getEndAddress()); }
+				 * System.out.println("외부단편화 발생"); externalFragmentation = true; break; }
+				 * continue; }
+				 */
+
+			}
+
+			for (int i = 0; i < 2; i++) {
+				Random random = new Random();
+				Process removeProcess = new Process();
+				if (process.size() <= 0) {
+					System.out.println("프로세스스가 비었습니다.");
+					break;
+				}
+				num = random.nextInt(process.size());
+				removeProcess = process.get(num);
+				if (process.size() == 0) {
+					System.out.println("hole이 비어있습니다.");
+					break;
+				}
+
+				for (int j = 0; j < hole.size(); j++) {
+					// 프로세스의 end주소와 hole의 start주소가 같다면(삭제하려는 프로세스가 hole과 연속된다면
+					if (removeProcess.getEndAddress() == hole.get(j).startAddress) {
+						hole.get(j).setStartAddress(removeProcess.getStartAddress());
+						hole.get(j).setSize(hole.get(j).getEndAddress(), hole.get(j).getStartAddress());
+						break;
+					}
+					// 프로세스의 end주소와 홀의 start주소와 같은게 없다면
+					else if (j == hole.size() - 1) {
+						Hole newHole = new Hole(removeProcess.getStartAddress(), removeProcess.getEndAddress());
+						hole.add(newHole);
+						break;
+					} else
+						continue;
+				}
+				process.remove(num);
+
+			}
+
+		}
+
+	}
+}
